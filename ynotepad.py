@@ -1,3 +1,6 @@
+#coding:utf-8
+
+
 import tkinter
 import os, sys, ctypes
 from tkinter import *
@@ -15,11 +18,12 @@ class Notepad:
         ScaleFactor = ctypes.windll.shcore.GetScaleFactorForDevice(0)
         root.tk.call('tk', 'scaling', ScaleFactor / 75)
 
-
     # Set main window
     Width = 300
     Height = 300
     TextArea = Text(root)
+    label = Label(root, anchor = W)
+    label.pack(side = BOTTOM, fill = X)
     menu = Menu(root)
     file_menu = Menu(menu, tearoff = 0)
     edit_menu = Menu(menu, tearoff = 0)
@@ -30,6 +34,8 @@ class Notepad:
 
     def __init__(self, **kwargs):
         self.root.config(menu = self.menu)
+        self.TextArea.focus()
+        self.TextArea.bind('<<TextModified>>', self.on_modify)
         # Set text area size
         try:
             self.Width = kwargs['width']
@@ -46,7 +52,7 @@ class Notepad:
         self.root.grid_columnconfigure(0, weight = 1)
 
         # Add controls (widget)
-        self.TextArea.grid(sticky = N + E + S + W)
+        self.TextArea.pack(side = TOP, fill = BOTH, expand = True)
 
         # Add command
         self.file_menu.add_command(label = "New", command = self.newfile)
@@ -123,26 +129,24 @@ class Notepad:
     def clear(self):
         self.TextArea.delete(1.0, "end")
 
-
-    # def search(self):
-    #     self.root.tag_remove("match", "1.0", 'end')
-    #     count = 0; pos = "1.0"
-    #     needle = string.get()
-    #     if needle:
-    #         while True:
-    #             pos = self.notePad.search(needle, pos, nocase=num.get(), stopindex='end')
-    #             if not pos:
-    #                 break
-    #             lastpos = f'{pos}+{len(needle)}c'
-    #             self.notePad.tag_add("match", pos, lastpos)
-    #             count += 1; pos = lastpos
-    #         self.notePad.tag_configure('match', background = 'yellow')
-    #         et.focus_set()
-    #         find.title(f"{count}个被匹配")
+    def _proxy(self, command, *args):
+        if command == 'get' and (args[0] == 'sel.first' and args[1] == 'sel.last') and not self.tag_ranges('sel'):
+            return
+        if command == 'delete' and (args[0] == 'sel.first' and args[1] == 'sel.last') and not self.tag_ranges('sel'):
+            return
+        cmd = (self._orig, command) + args
+        result = self.call(cmd)
+        if command in ('insert', 'delete', 'replace'):
+            self.event_generate('<<TextModified>>')
+        return result
 
     def run(self):
         self.root.mainloop()
 
+    def on_modify(event):
+        chars = event.widget.get('0.0', 'end')
+        label.configure(text='%s chars' % len(chars))
+        print(chars)
 
 notepad = Notepad(width = 600, height = 400)
 notepad.run()
