@@ -1,10 +1,8 @@
 #coding:utf-8
 
-
-import tkinter
 import os, sys, ctypes
 from tkinter import *
-from tkinter import ttk
+from tkinter.ttk import *
 from tkinter.messagebox import *
 from tkinter.filedialog import *
 
